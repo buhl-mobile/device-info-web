@@ -1,48 +1,46 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Handydaten Empfang</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Info</title>
+  <script>
+    // Funktion, um die Handydaten zu erfassen und an die API zu senden
+    async function sendDeviceInfo() {
+      // Erfassen der Daten
+      const deviceInfo = {
+        os: navigator.userAgent.includes('iPhone') ? 'iOS' : 'Android',
+        model: navigator.userAgent, // Nutzer-Agent als Modellinformationen
+        storage: 'Nicht verfügbar', // Kann leider nicht über Browser-Skripte ausgelesen werden
+        battery: 'Nicht verfügbar' // Kann später erweitert werden
+      };
+
+      try {
+        // Daten an die API senden
+        const response = await fetch('https://device-info-backend.onrender.com/device-info', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(deviceInfo)
+        });
+
+        // Antwort der API anzeigen
+        const result = await response.json();
+        document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        // Fehler anzeigen
+        document.getElementById('output').textContent = `Fehler: ${error.message}`;
+      }
+    }
+
+    // Automatisch senden, wenn die Seite geladen wird
+    window.onload = sendDeviceInfo;
+  </script>
 </head>
 <body>
-    <h1>QR Code scannen, um Handydaten zu senden</h1>
-    <p>Scanne den QR-Code, um deine Handydaten zu senden:</p>
-
-    <!-- QR-Code mit URL für die API -->
-    <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://device-info-web.onrender.com/device-info&size=200x200" alt="QR Code">
-    
-    <!-- Platz, um die Handydaten nach Empfang anzuzeigen -->
-    <div id="deviceData"></div>
-
-    <script>
-        // Hier kannst du die Handydaten abfragen, wenn der Kunde die Seite betritt
-        window.onload = function () {
-            // Eine Funktion, um Handydaten vom Gerät zu bekommen (z. B. mit JavaScript)
-            const deviceInfo = {
-                os: navigator.platform, // Betriebssystem des Geräts
-                model: navigator.userAgent, // Modell könnte durch User-Agent ermittelt werden
-                storage: '128GB', // Hier müsstest du eine Möglichkeit finden, den tatsächlichen Speicher des Geräts zu ermitteln
-                battery: '85%' // Beispielwert, um Batterieinformationen zu übermitteln
-            };
-
-            // Sende die Handydaten via POST-Request an das Backend
-            fetch('https://deine-domain/device-info', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(deviceInfo)
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Anzeige der gesendeten Daten
-                document.getElementById('deviceData').innerHTML = `Daten empfangen: ${JSON.stringify(data)}`;
-            })
-            .catch(error => {
-                console.error('Fehler beim Senden der Daten:', error);
-            });
-        };
-    </script>
+  <h1>Device Info</h1>
+  <p>Deine Gerätedaten werden verarbeitet...</p>
+  <pre id="output"></pre>
 </body>
 </html>
