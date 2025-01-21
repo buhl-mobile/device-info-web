@@ -3,44 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Device Info</title>
-  <script>
-    // Funktion, um die Handydaten zu erfassen und an die API zu senden
-    async function sendDeviceInfo() {
-      // Erfassen der Daten
-      const deviceInfo = {
-        os: navigator.userAgent.includes('iPhone') ? 'iOS' : 'Android',
-        model: navigator.userAgent, // Nutzer-Agent als Modellinformationen
-        storage: 'Nicht verfügbar', // Kann leider nicht über Browser-Skripte ausgelesen werden
-        battery: 'Nicht verfügbar' // Kann später erweitert werden
-      };
-
-      try {
-        // Daten an die API senden
-        const response = await fetch('https://device-info-backend.onrender.com/device-info', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(deviceInfo)
-        });
-
-        // Antwort der API anzeigen
-        const result = await response.json();
-        document.getElementById('output').textContent = JSON.stringify(result, null, 2);
-      } catch (error) {
-        // Fehler anzeigen
-        document.getElementById('output').textContent = `Fehler: ${error.message}`;
-      }
+  <title>Gerätedaten</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
     }
-
-    // Automatisch senden, wenn die Seite geladen wird
-    window.onload = sendDeviceInfo;
-  </script>
+    h1 {
+      color: #333;
+    }
+    p {
+      font-size: 18px;
+      color: #555;
+    }
+    .loading {
+      color: #888;
+    }
+    .error {
+      color: red;
+    }
+  </style>
 </head>
 <body>
-  <h1>Device Info</h1>
-  <p>Deine Gerätedaten werden verarbeitet...</p>
-  <pre id="output"></pre>
+  <h1>Gerätedaten</h1>
+  <p class="loading">Gerätedaten werden verarbeitet...</p>
+  <p id="device-model"></p>
+  <p id="battery-status"></p>
+  <p id="response"></p>
+  <p id="error" class="error"></p>
+
+  <script>
+    // Sammle Geräteinformationen
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+    };
+
+    // Zeige die Gerätedaten in der Konsole
+    console.log("Geräteinformationen:", deviceInfo);
+
+    // Funktion zum Senden der Daten an das Backend
+    const sendDeviceInfo = async () => {
+      try {
+        const response = await fetch("https://device-info-backend.onrender.com/device-info", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(deviceInfo),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server-Fehler: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Antwort vom Server:", data);
+
+        // Zeige die Antwort des Backends an
+        document.getElementById("device-model").innerText = `Modell: ${data.deviceModel || "Nicht erkannt"}`;
+        document.getElementById("response").innerText = `Server-Antwort: ${JSON.stringify(data, null, 2)}`;
+      } catch (error) {
+        console.error("Fehler beim Senden der Daten:", error);
+        document.getElementById("error").innerText = `Fehler: ${error.message}`;
+      }
+    };
+
+    // Battery Status API
+    if (navigator.getBattery) {
+      navigator.getBattery().then((battery) => {
+        const batteryInfo = {
+          charging: battery.charging,
+          level: battery.level * 100 + "%",
+        };
+
+        console.log("Batterieinformationen:", batteryInfo);
+        document.getElementById("battery-status").innerText =
+          `Batterie: ${batteryInfo.level} (Lädt: ${batteryInfo.charging ? "Ja" : "Nein"})`;
+
+        // Füge die Batterieinformationen zum Gerät hinzu
+        deviceInfo.battery = batteryInfo;
+      }).catch((err) => {
+        console.error("Batterieinformationen nicht verfügbar:", err);
+        document.getElementById("battery-status").innerText = "Batterieinformationen nicht verfügbar";
+      });
+    } else {
+      document.getElementById("battery-status").innerText = "Battery API wird nicht unterstützt.";
+    }
+
+    // Sende die Gerätedaten an das Backend
+    sendDeviceInfo();
+  </script>
 </body>
 </html>
